@@ -1,3 +1,10 @@
+"""Gets recent tweets from a database and returns formatted output showing the most commonly used terms,
+along with the percentage of occurance for each term used.
+
+Has a verbose option which will provide examples from the DB of how each term was used.
+
+Terms are represented as lemmas, so that knight, knighted, knights are all considered one term.
+"""
 import sys
 from TweetDB import sqlconnect
 from TweetClasses import Tweet
@@ -6,6 +13,8 @@ from nltk.stem import WordNetLemmatizer
 from collections import Counter
 
 class Candidate(object):
+    """Holds information about the term to be searched for and the context its used in.
+    """
     def __init__(self,name):
         self.name = name
         self.word_counts = Counter()
@@ -13,6 +22,8 @@ class Candidate(object):
         self.lemmatizer = WordNetLemmatizer()
         
     def count_tweet(self, tweet, stoplist):
+        """Adds a tweet to the context for the term.
+        """
         for word in word_tokenize(tweet.text):
             lemma = self.lemmatizer.lemmatize(word.lower())
             if lemma in stoplist or len(lemma)<3:
@@ -30,6 +41,8 @@ class Candidate(object):
         return self.most_common_words
     
 def load_stoplist(path):
+    """Loads a generic stoplist and adds a few custom terms
+    """
     stoplist = open(path).read().split('\n')
     stoplist = stoplist + ['donald','trump','hillary',
                            'clinton','i','rt',
@@ -38,6 +51,7 @@ def load_stoplist(path):
     return stoplist
 
 def db_to_tweets(dbcursor,n=5000):
+    """Pulls some tweets from the database"""
     return [Tweet(eval(t[0])) for t in dbcursor.execute("""
                                                 SELECT original
                                                 FROM tweets
@@ -46,6 +60,7 @@ def db_to_tweets(dbcursor,n=5000):
                                                 """.format(n)).fetchall()]
 
 def rp(part,whole):
+    """Turns two ints into a 3 decimal fraction"""
     fraction = part / float(whole)
     return round(fraction * 100,3)
 
